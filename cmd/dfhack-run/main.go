@@ -24,19 +24,21 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func fatal(code int, args ...interface{}) {
+	fmt.Fprintln(os.Stderr, args...)
+	os.Exit(code)
+	panic("unreachable")
+}
+
 func main() {
 	if len(os.Args) <= 1 {
-		fmt.Fprintln(os.Stderr, "Usage: dfhack-run <command> [args...]")
-		os.Exit(2)
-		return
+		fatal(2, "Usage: dfhack-run <command> [args...]")
 	}
 
 	// Connect to DFHack
 	client := dfhackrpc.NewClient(os.Stdout)
 	if err := client.Connect(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-		return
+		fatal(2, err)
 	}
 
 	var rv dfhackrpc.CommandResult
@@ -44,21 +46,19 @@ func main() {
 
 	if os.Args[1] == "--lua" {
 		if len(os.Args) <= 3 {
-			fmt.Fprintln(os.Stderr, "Usage: dfhack-run --lua <module> <function> [args...]")
-			os.Exit(2)
-			return
+			fatal(2, "Usage: dfhack-run --lua <module> <function> [args...]")
 		}
 
 		var request dfproto.CoreRunLuaRequest
 		request.Module = proto.String(os.Args[2])
 		request.Function = proto.String(os.Args[3])
 		request.Arguments = os.Args[4:]
+
 		var response dfproto.StringListMessage
+
 		rv, err = client.Call("RunLua", &request, &response)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-			return
+			fatal(1, err)
 		}
 
 		if rv == dfhackrpc.OK {
@@ -68,14 +68,11 @@ func main() {
 		// Call the command
 		rv, err = client.RunCommand(os.Args[1], os.Args[2:]...)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-			return
+			fatal(1, err)
 		}
 	}
 
 	if rv != dfhackrpc.OK {
-		fmt.Fprintln(os.Stderr, rv)
-		os.Exit(1)
+		fatal(1, rv)
 	}
 }
