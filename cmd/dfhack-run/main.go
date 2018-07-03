@@ -20,8 +20,6 @@ import (
 	"strings"
 
 	"github.com/BenLubar/dfhackrpc"
-	"github.com/BenLubar/dfhackrpc/dfproto"
-	"github.com/golang/protobuf/proto"
 )
 
 func fatal(code int, args ...interface{}) {
@@ -49,20 +47,15 @@ func main() {
 			fatal(2, "Usage: dfhack-run --lua <module> <function> [args...]")
 		}
 
-		var request dfproto.CoreRunLuaRequest
-		request.Module = proto.String(os.Args[2])
-		request.Function = proto.String(os.Args[3])
-		request.Arguments = os.Args[4:]
+		var response []string
 
-		var response dfproto.StringListMessage
-
-		rv, err = client.Call("RunLua", &request, &response)
+		response, rv, err = client.RunLua(os.Args[2], os.Args[3], os.Args[4:]...)
 		if err != nil {
 			fatal(1, err)
 		}
 
 		if rv == dfhackrpc.OK {
-			fmt.Println(strings.Join(response.GetValue(), "\t"))
+			fmt.Println(strings.Join(response, "\t"))
 		}
 	} else {
 		// Call the command

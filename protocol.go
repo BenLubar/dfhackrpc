@@ -6,7 +6,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/BenLubar/dfhackrpc/dfproto"
+	"github.com/BenLubar/dfhackrpc/dfproto/core"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -110,7 +110,7 @@ func (c *Client) readResponse(v proto.Message) (CommandResult, error) {
 
 		switch header.ID {
 		case rpcReplyText:
-			var text dfproto.CoreTextNotification
+			var text dfproto_core.CoreTextNotification
 			if err := c.readMessage(header.Size, &text); err != nil {
 				return LinkFailure, err
 			}

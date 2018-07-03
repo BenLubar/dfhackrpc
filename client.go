@@ -22,7 +22,7 @@ type Client struct {
 	addr    string
 	conn    net.Conn
 	bad     bool
-	methods map[string]*methodInfo
+	methods map[[2]string]*methodInfo
 	lock    sync.Mutex
 }
 
