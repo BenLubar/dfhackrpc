@@ -3,8 +3,8 @@ package dfhackrpc
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
+	"net"
 
 	"github.com/BenLubar/dfhackrpc/dfproto"
 	"github.com/golang/protobuf/proto"
@@ -28,39 +28,52 @@ type rpcMessageHeader struct {
 	Size int32
 }
 
-func (c *Client) handshake() (err error) {
-	defer func() {
-		if err != nil {
-			_ = c.conn.Close()
-			c.conn = nil
-		}
-	}()
+func writeFull(w io.Writer, b []byte) error {
+	n, err := w.Write(b)
 
-	if n, err := c.conn.Write([]byte(clientMagic)); err != nil {
+	if err == nil && n != len(b) {
+		err = io.ErrShortWrite
+	}
+
+	return err
+}
+
+func readFull(r io.Reader, b []byte) error {
+	_, err := io.ReadFull(r, b)
+
+	if err == io.EOF {
+		err = io.ErrUnexpectedEOF
+	}
+
+	return err
+}
+
+func (c *Client) handshake(conn net.Conn) error {
+	if err := writeFull(conn, []byte(clientMagic)); err != nil {
+		_ = conn.Close()
 		return err
-	} else if n != len(clientMagic) {
-		return io.ErrShortWrite
 	}
 
 	var response [len(serverMagic)]byte
-	if _, err := io.ReadFull(c.conn, response[:]); err == io.EOF {
-		return io.ErrUnexpectedEOF
-	} else if err != nil {
+	if err := readFull(conn, response[:]); err != nil {
+		_ = conn.Close()
 		return err
 	}
 
 	if !bytes.Equal(response[:], []byte(serverMagic)) {
-		return errors.New("dfhackrpc: invalid handshake response from server")
+		_ = conn.Close()
+		return errBadHandshake
 	}
 
 	c.resetMethods()
 	c.bad = false
+	c.conn = conn
 	return nil
 }
 
 func (c *Client) writeHeader(id int16, size int) error {
 	if size > maxMessageSize {
-		return errors.New("dfhackrpc: message is too large")
+		return errRequestTooLarge
 	}
 
 	return binary.Write(c.conn, binary.LittleEndian, &rpcMessageHeader{
@@ -79,12 +92,9 @@ func (c *Client) writeRequest(id int16, v proto.Message) error {
 		return err
 	}
 
-	if n, err := c.conn.Write(b); err != nil {
+	if err := writeFull(c.conn, b); err != nil {
 		c.bad = true
 		return err
-	} else if n != len(b) {
-		c.bad = true
-		return io.ErrShortWrite
 	}
 
 	return nil
@@ -125,17 +135,19 @@ func (c *Client) readResponse(v proto.Message) (CommandResult, error) {
 func (c *Client) readMessage(size int32, v proto.Message) error {
 	if size > maxMessageSize {
 		c.bad = true
-		return errors.New("dfhackrpc: response message exceeds maximum size")
+		return errResponseTooLarge
 	}
 
 	b := make([]byte, size)
-	if _, err := io.ReadFull(c.conn, b); err == io.EOF {
-		c.bad = true
-		return io.ErrUnexpectedEOF
-	} else if err != nil {
+	if err := readFull(c.conn, b); err != nil {
 		c.bad = true
 		return err
 	}
 
-	return proto.Unmarshal(b, v)
+	err := proto.Unmarshal(b, v)
+	if err != nil {
+		c.bad = true
+	}
+
+	return err
 }

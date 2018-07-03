@@ -2,7 +2,6 @@
 package dfhackrpc // import "github.com/BenLubar/dfhackrpc"
 
 import (
-	"errors"
 	"io"
 	"net"
 	"os"
@@ -68,7 +67,7 @@ func (c *Client) ConnectAddr(addr string) error {
 	defer c.lock.Unlock()
 
 	if c.conn != nil {
-		return errors.New("dfhackrpc: client is already connected")
+		return errAlreadyConnected
 	}
 
 	conn, err := net.Dial("tcp", addr)
@@ -77,8 +76,7 @@ func (c *Client) ConnectAddr(addr string) error {
 	}
 
 	c.addr = addr
-	c.conn = conn
-	return c.handshake()
+	return c.handshake(conn)
 }
 
 // Close disconnects the client. When this method returns, the client will be
@@ -110,7 +108,7 @@ func (c *Client) Close() error {
 
 func (c *Client) checkReconnect() error {
 	if c.conn == nil {
-		return errors.New("dfhackrpc: not connected")
+		return errNotConnected
 	}
 
 	if !c.bad {
@@ -123,12 +121,9 @@ func (c *Client) checkReconnect() error {
 	}
 
 	oldConn := c.conn
-	c.conn = conn
-	if err = c.handshake(); err != nil {
-		c.conn = oldConn
-		return err
+	if err = c.handshake(conn); err == nil {
+		_ = oldConn.Close()
 	}
 
-	_ = oldConn.Close()
-	return nil
+	return err
 }

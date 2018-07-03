@@ -1,7 +1,5 @@
 package dfhackrpc
 
-import "errors"
-
 // CommandResult is a DFHack command result.
 type CommandResult int
 
@@ -54,5 +52,11 @@ func (rv CommandResult) Err() error {
 		return nil
 	}
 
-	return errors.New(rv.String())
+	return commandResultError(rv)
+}
+
+type commandResultError CommandResult
+
+func (rv commandResultError) Error() string {
+	return CommandResult(rv).String()
 }
