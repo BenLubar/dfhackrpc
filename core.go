@@ -19,28 +19,21 @@ func (c *Client) RunCommand(command string, args ...string) (CommandResult, erro
 // Lock is a convenience wrapper around the CoreSuspend RPC method.
 // It implements the sync.Locker interface and panics if an error occurs.
 func (c *Client) Lock() {
-	var request dfproto_core.EmptyMessage
-
-	var response dfproto_core.IntMessage
-
-	rv, err := c.Call("CoreSuspend", &request, &response)
-	if err == nil {
-		err = rv.Err()
-	}
-
-	if err != nil {
-		panic(err)
-	}
+	c.callSuspend("CoreSuspend")
 }
 
 // Unlock is a convenience wrapper around the CoreResume RPC method.
 // It implements the sync.Locker interface and panics if an error occurs.
 func (c *Client) Unlock() {
+	c.callSuspend("CoreResume")
+}
+
+func (c *Client) callSuspend(method string) {
 	var request dfproto_core.EmptyMessage
 
 	var response dfproto_core.IntMessage
 
-	rv, err := c.Call("CoreResume", &request, &response)
+	rv, err := c.Call(method, &request, &response)
 	if err == nil {
 		err = rv.Err()
 	}

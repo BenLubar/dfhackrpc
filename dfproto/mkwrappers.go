@@ -137,52 +137,36 @@ func writeImports(w io.Writer, decls [][3]string, pluginMessages []string) {
 
 	paths := []string{"github.com/BenLubar/dfhackrpc"}
 	var addedBasic, addedCore bool
-	for _, d := range decls {
-		var foundIn, foundOut bool
+	add := func(message string) {
 		for _, m := range pluginMessages {
-			if m == d[1] {
-				foundIn = true
-			}
-			if m == d[2] {
-				foundOut = true
+			if m == message {
+				return
 			}
 		}
 		for _, m := range basicMessages {
-			var found bool
-			if m == d[1] && !foundIn {
-				foundIn = true
-				found = true
-			}
-			if m == d[2] && !foundOut {
-				foundOut = true
-				found = true
-			}
-			if found && !addedBasic {
-				paths = append(paths, "github.com/BenLubar/dfhackrpc/dfproto")
-				addedBasic = true
+			if m == message {
+				if !addedBasic {
+					paths = append(paths, "github.com/BenLubar/dfhackrpc/dfproto")
+					addedBasic = true
+				}
+				return
 			}
 		}
 		for _, m := range coreMessages {
-			var found bool
-			if m == d[1] && !foundIn {
-				foundIn = true
-				found = true
-			}
-			if m == d[2] && !foundOut {
-				foundOut = true
-				found = true
-			}
-			if found && !addedCore {
-				paths = append(paths, "github.com/BenLubar/dfhackrpc/dfproto/core")
-				addedCore = true
+			if m == message {
+				if !addedCore {
+					paths = append(paths, "github.com/BenLubar/dfhackrpc/dfproto/core")
+					addedCore = true
+				}
+				return
 			}
 		}
-		if !foundIn {
-			panic("cannot find message named " + d[1])
-		}
-		if !foundOut {
-			panic("cannot find message named " + d[2])
-		}
+		panic("cannot find message named " + message)
+	}
+
+	for _, d := range decls {
+		add(d[1])
+		add(d[2])
 	}
 
 	sort.Strings(paths)
@@ -213,7 +197,7 @@ func writeWrapper(w io.Writer, plugin, method, input, output string, pluginMessa
 	requestVar := "request"
 	if input == "EmptyMessage" {
 		requestVar = "&request"
-		fmt.Fprintln(w, "\tvar request dfproto_core.EmptyMessage\n")
+		fmt.Fprint(w, "\tvar request dfproto_core.EmptyMessage\n\n")
 	}
 	fmt.Fprintf(w, "\tvar response %s%s\n\n", getPrefix(output, pluginMessages), output)
 	if output == "EmptyMessage" {

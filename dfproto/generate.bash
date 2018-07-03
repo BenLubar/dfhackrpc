@@ -41,9 +41,7 @@ go get -u github.com/golang/protobuf/protoc-gen-go
 
 # generate!
 protoc --go_out=import_path=dfproto,paths=source_relative:. -I. -Icore ./*.proto
-cd core
-protoc --go_out=import_path=dfproto_core,paths=source_relative:. -I. -I.. ./*.proto
-cd ..
+(cd core && protoc --go_out=import_path=dfproto_core,paths=source_relative:. -I. -I.. ./*.proto)
 for p in plugins/*/; do
 	(cd "$p" && protoc --go_out="import_path=$(basename "$p"),paths=source_relative:." -I../.. -I../../core -I. ./*.proto)
 done
