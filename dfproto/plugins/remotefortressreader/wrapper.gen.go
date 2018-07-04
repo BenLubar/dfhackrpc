@@ -49,7 +49,7 @@ func CallCheckHashes(client *dfhackrpc.Client) (dfhackrpc.CommandResult, error) 
 }
 
 // CallGetTiletypeList is a convenience wrapper around the RemoteFortressReader::GetTiletypeList RPC method.
-func CallGetTiletypeList(client *dfhackrpc.Client) ([]*Titletype, dfhackrpc.CommandResult, error) {
+func CallGetTiletypeList(client *dfhackrpc.Client) ([]*Tiletype, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response TiletypeList

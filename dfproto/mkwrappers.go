@@ -70,7 +70,7 @@ var unwrap = map[[2]string][]struct {
 	{"remotefortressreader", "TiletypeList"}: {
 		{
 			Field: "TiletypeList",
-			Type:  "[]*Titletype",
+			Type:  "[]*Tiletype",
 		},
 	},
 	{"remotefortressreader", "BuildingList"}: {
