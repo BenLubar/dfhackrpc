@@ -12,8 +12,8 @@ import (
 	"strings"
 )
 
-var basicMessages = findMessages(".")
-var coreMessages = findMessages("core")
+var _, _, basicMessages = scanProtos(".")
+var _, _, coreMessages = scanProtos("core")
 
 func main() {
 	makeWrapper("dfproto", ".")
@@ -28,25 +28,103 @@ func main() {
 	}
 }
 
+var unwrap = map[[2]string][]struct {
+	Field     string
+	Type      string
+	SetPrefix string
+}{
+	{"dfproto_core", "EmptyMessage"}: {},
+	{"dfproto_core", "IntMessage"}: {
+		{
+			Field:     "Value",
+			Type:      "int32",
+			SetPrefix: "&",
+		},
+	},
+	{"dfproto_core", "IntListMessage"}: {
+		{
+			Field: "Value",
+			Type:  "[]int32",
+		},
+	},
+	{"dfproto_core", "StringMessage"}: {
+		{
+			Field:     "Value",
+			Type:      "string",
+			SetPrefix: "&",
+		},
+	},
+	{"dfproto_core", "StringListMessage"}: {
+		{
+			Field: "Value",
+			Type:  "[]string",
+		},
+	},
+	{"remotefortressreader", "SingleBool"}: {
+		{
+			Field:     "Value",
+			Type:      "bool",
+			SetPrefix: "&",
+		},
+	},
+	{"remotefortressreader", "TiletypeList"}: {
+		{
+			Field: "TiletypeList",
+			Type:  "[]*Titletype",
+		},
+	},
+	{"remotefortressreader", "BuildingList"}: {
+		{
+			Field: "BuildingList",
+			Type:  "[]*BuildingDefinition",
+		},
+	},
+	{"remotefortressreader", "MaterialList"}: {
+		{
+			Field: "MaterialList",
+			Type:  "[]*MaterialDefinition",
+		},
+	},
+	{"remotefortressreader", "UnitList"}: {
+		{
+			Field: "CreatureList",
+			Type:  "[]*UnitDefinition",
+		},
+	},
+	{"remotefortressreader", "PlantList"}: {
+		{
+			Field: "PlantList",
+			Type:  "[]*PlantDef",
+		},
+	},
+	{"remotefortressreader", "CreatureRawList"}: {
+		{
+			Field: "CreatureRaws",
+			Type:  "[]*CreatureRaw",
+		},
+	},
+	{"remotefortressreader", "ArmyList"}: {
+		{
+			Field: "Armies",
+			Type:  "[]*Army",
+		},
+	},
+	{"remotefortressreader", "PlantRawList"}: {
+		{
+			Field: "PlantRaws",
+			Type:  "[]*PlantRaw",
+		},
+	},
+	{"remotefortressreader", "Status"}: {
+		{
+			Field: "Reports",
+			Type:  "[]*Report",
+		},
+	},
+}
+
 func makeWrapper(packageName, prefix string) {
-	protos, err := filepath.Glob(filepath.Join(prefix, "*.proto"))
-	if err != nil {
-		panic(err)
-	}
-
-	var plugin string
-	var rpcDeclarations [][3]string
-	var pluginMessages []string
-
-	for i, p := range protos {
-		name, decls, messages := scanProto(p)
-		if i != 0 && plugin != name {
-			panic("plugin name mismatch in " + packageName + ": " + plugin + " != " + name)
-		}
-		plugin = name
-		rpcDeclarations = append(rpcDeclarations, decls...)
-		pluginMessages = append(pluginMessages, messages...)
-	}
+	plugin, rpcDeclarations, pluginMessages := scanProtos(prefix)
 
 	f, err := os.Create(filepath.Join(prefix, "wrapper.gen.go"))
 	if err != nil {
@@ -69,24 +147,27 @@ func makeWrapper(packageName, prefix string) {
 	writeImports(f, rpcDeclarations, pluginMessages)
 
 	for _, decl := range rpcDeclarations {
-		writeWrapper(f, plugin, decl[0], decl[1], decl[2], pluginMessages)
+		writeWrapper(f, plugin, decl[0], decl[1], decl[2], packageName, pluginMessages)
 	}
 }
 
-func findMessages(prefix string) []string {
-	var messages []string
-
+func scanProtos(prefix string) (plugin string, declarations [][3]string, messages []string) {
 	protos, err := filepath.Glob(filepath.Join(prefix, "*.proto"))
 	if err != nil {
 		panic(err)
 	}
 
-	for _, p := range protos {
-		_, _, m := scanProto(p)
-		messages = append(messages, m...)
+	for i, p := range protos {
+		name, decls, msgs := scanProto(p)
+		if i != 0 && plugin != name {
+			panic("plugin name mismatch in " + prefix + ": " + plugin + " != " + name)
+		}
+		plugin = name
+		declarations = append(declarations, decls...)
+		messages = append(messages, msgs...)
 	}
 
-	return messages
+	return
 }
 
 func scanProto(name string) (plugin string, decls [][3]string, messages []string) {
@@ -179,57 +260,95 @@ func writeImports(w io.Writer, decls [][3]string, pluginMessages []string) {
 	fmt.Fprintln(w, ")")
 }
 
-func writeWrapper(w io.Writer, plugin, method, input, output string, pluginMessages []string) {
-	fmt.Fprintln(w)
-	qualifiedName := method
+func qualifiedName(plugin, method string) string {
 	if plugin != "" {
-		qualifiedName = plugin + "::" + method
+		return plugin + "::" + method
 	}
-	fmt.Fprintf(w, "// Call%s is a convenience wrapper around the %s RPC method.\n", method, qualifiedName)
+	return method
+}
+
+func writeWrapper(w io.Writer, plugin, method, input, output, packageName string, pluginMessages []string) {
+	fmt.Fprintf(w, "\n// Call%s is a convenience wrapper around the %s RPC method.\n", method, qualifiedName(plugin, method))
+
 	var inputDecl, outputDecl string
-	if input != "EmptyMessage" {
+	if uw, ok := unwrap[[2]string{getPrefix2(input, packageName, pluginMessages), input}]; ok {
+		for _, u := range uw {
+			inputDecl += ", " + strings.ToLower(u.Field) + " " + u.Type
+		}
+	} else {
 		inputDecl = ", request *" + getPrefix(input, pluginMessages) + input
 	}
-	if output != "EmptyMessage" {
+
+	if uw, ok := unwrap[[2]string{getPrefix2(output, packageName, pluginMessages), output}]; ok {
+		for _, u := range uw {
+			outputDecl += u.Type + ", "
+		}
+	} else {
 		outputDecl = "*" + getPrefix(output, pluginMessages) + output + ", "
 	}
+
 	fmt.Fprintf(w, "func Call%s(client *dfhackrpc.Client%s) (%sdfhackrpc.CommandResult, error) {\n", method, inputDecl, outputDecl)
+
 	requestVar := "request"
-	if input == "EmptyMessage" {
+	if uw, ok := unwrap[[2]string{getPrefix2(input, packageName, pluginMessages), input}]; ok {
 		requestVar = "&request"
-		fmt.Fprint(w, "\tvar request dfproto_core.EmptyMessage\n\n")
+		fmt.Fprint(w, "\tvar request ", getPrefix(input, pluginMessages), input, "\n")
+		for _, u := range uw {
+			fmt.Fprint(w, "\trequest.", u.Field, " = ", u.SetPrefix, strings.ToLower(u.Field), "\n")
+		}
+		fmt.Fprintln(w)
 	}
+
 	fmt.Fprintf(w, "\tvar response %s%s\n\n", getPrefix(output, pluginMessages), output)
-	if output == "EmptyMessage" {
+	if uw, ok := unwrap[[2]string{getPrefix2(output, packageName, pluginMessages), output}]; ok && len(uw) == 0 {
 		fmt.Fprint(w, "\treturn ")
 	} else {
 		fmt.Fprint(w, "\trv, err := ")
 	}
+
 	if plugin == "" {
 		fmt.Fprintf(w, "client.Call(%q, %s, &response)\n", method, requestVar)
 	} else {
 		fmt.Fprintf(w, "client.CallPlugin(%q, %q, %s, &response)\n", plugin, method, requestVar)
 	}
-	if output != "EmptyMessage" {
+
+	if uw, ok := unwrap[[2]string{getPrefix2(output, packageName, pluginMessages), output}]; ok && len(uw) != 0 {
+		fmt.Fprint(w, "\n\treturn ")
+		for _, u := range uw {
+			fmt.Fprint(w, "response.Get", u.Field, "(), ")
+		}
+		fmt.Fprintln(w, "rv, err")
+	} else if !ok {
 		fmt.Fprintln(w, "\n\treturn &response, rv, err")
 	}
+
 	fmt.Fprintln(w, "}")
 }
 
 func getPrefix(message string, pluginMessages []string) string {
+	prefix := getPrefix2(message, "", pluginMessages)
+
+	if prefix != "" {
+		prefix += "."
+	}
+
+	return prefix
+}
+
+func getPrefix2(message, packageName string, pluginMessages []string) string {
 	for _, m := range pluginMessages {
 		if m == message {
-			return ""
+			return packageName
 		}
 	}
 	for _, m := range basicMessages {
 		if m == message {
-			return "dfproto."
+			return "dfproto"
 		}
 	}
 	for _, m := range coreMessages {
 		if m == message {
-			return "dfproto_core."
+			return "dfproto_core"
 		}
 	}
 	panic("unknown message: " + message)

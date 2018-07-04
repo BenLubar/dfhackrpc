@@ -6,25 +6,25 @@ import (
 )
 
 // CallGetVersion is a convenience wrapper around the GetVersion RPC method.
-func CallGetVersion(client *dfhackrpc.Client) (*dfproto_core.StringMessage, dfhackrpc.CommandResult, error) {
+func CallGetVersion(client *dfhackrpc.Client) (string, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response dfproto_core.StringMessage
 
 	rv, err := client.Call("GetVersion", &request, &response)
 
-	return &response, rv, err
+	return response.GetValue(), rv, err
 }
 
 // CallGetDFVersion is a convenience wrapper around the GetDFVersion RPC method.
-func CallGetDFVersion(client *dfhackrpc.Client) (*dfproto_core.StringMessage, dfhackrpc.CommandResult, error) {
+func CallGetDFVersion(client *dfhackrpc.Client) (string, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response dfproto_core.StringMessage
 
 	rv, err := client.Call("GetDFVersion", &request, &response)
 
-	return &response, rv, err
+	return response.GetValue(), rv, err
 }
 
 // CallGetWorldInfo is a convenience wrapper around the GetWorldInfo RPC method.

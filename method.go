@@ -18,12 +18,12 @@ type methodInfo struct {
 
 func (c *Client) resetMethods() {
 	c.methods = map[[2]string]*methodInfo{
-		[2]string{"", bindMethod}: {
+		{"", bindMethod}: {
 			request:  reflect.TypeOf(&dfproto_core.CoreBindRequest{}),
 			response: reflect.TypeOf(&dfproto_core.CoreBindReply{}),
 			id:       0,
 		},
-		[2]string{"", runCommand}: {
+		{"", runCommand}: {
 			request:  reflect.TypeOf(&dfproto_core.CoreRunCommandRequest{}),
 			response: reflect.TypeOf(&dfproto_core.EmptyMessage{}),
 			id:       1,

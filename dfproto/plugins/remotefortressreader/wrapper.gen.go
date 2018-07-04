@@ -9,25 +9,25 @@ import (
 )
 
 // CallGetMaterialList is a convenience wrapper around the RemoteFortressReader::GetMaterialList RPC method.
-func CallGetMaterialList(client *dfhackrpc.Client) (*MaterialList, dfhackrpc.CommandResult, error) {
+func CallGetMaterialList(client *dfhackrpc.Client) ([]*MaterialDefinition, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response MaterialList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetMaterialList", &request, &response)
 
-	return &response, rv, err
+	return response.GetMaterialList(), rv, err
 }
 
 // CallGetGrowthList is a convenience wrapper around the RemoteFortressReader::GetGrowthList RPC method.
-func CallGetGrowthList(client *dfhackrpc.Client) (*MaterialList, dfhackrpc.CommandResult, error) {
+func CallGetGrowthList(client *dfhackrpc.Client) ([]*MaterialDefinition, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response MaterialList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetGrowthList", &request, &response)
 
-	return &response, rv, err
+	return response.GetMaterialList(), rv, err
 }
 
 // CallGetBlockList is a convenience wrapper around the RemoteFortressReader::GetBlockList RPC method.
@@ -49,43 +49,43 @@ func CallCheckHashes(client *dfhackrpc.Client) (dfhackrpc.CommandResult, error) 
 }
 
 // CallGetTiletypeList is a convenience wrapper around the RemoteFortressReader::GetTiletypeList RPC method.
-func CallGetTiletypeList(client *dfhackrpc.Client) (*TiletypeList, dfhackrpc.CommandResult, error) {
+func CallGetTiletypeList(client *dfhackrpc.Client) ([]*Titletype, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response TiletypeList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetTiletypeList", &request, &response)
 
-	return &response, rv, err
+	return response.GetTiletypeList(), rv, err
 }
 
 // CallGetPlantList is a convenience wrapper around the RemoteFortressReader::GetPlantList RPC method.
-func CallGetPlantList(client *dfhackrpc.Client, request *BlockRequest) (*PlantList, dfhackrpc.CommandResult, error) {
+func CallGetPlantList(client *dfhackrpc.Client, request *BlockRequest) ([]*PlantDef, dfhackrpc.CommandResult, error) {
 	var response PlantList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetPlantList", request, &response)
 
-	return &response, rv, err
+	return response.GetPlantList(), rv, err
 }
 
 // CallGetUnitList is a convenience wrapper around the RemoteFortressReader::GetUnitList RPC method.
-func CallGetUnitList(client *dfhackrpc.Client) (*UnitList, dfhackrpc.CommandResult, error) {
+func CallGetUnitList(client *dfhackrpc.Client) ([]*UnitDefinition, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response UnitList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetUnitList", &request, &response)
 
-	return &response, rv, err
+	return response.GetCreatureList(), rv, err
 }
 
 // CallGetUnitListInside is a convenience wrapper around the RemoteFortressReader::GetUnitListInside RPC method.
-func CallGetUnitListInside(client *dfhackrpc.Client, request *BlockRequest) (*UnitList, dfhackrpc.CommandResult, error) {
+func CallGetUnitListInside(client *dfhackrpc.Client, request *BlockRequest) ([]*UnitDefinition, dfhackrpc.CommandResult, error) {
 	var response UnitList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetUnitListInside", request, &response)
 
-	return &response, rv, err
+	return response.GetCreatureList(), rv, err
 }
 
 // CallGetViewInfo is a convenience wrapper around the RemoteFortressReader::GetViewInfo RPC method.
@@ -120,25 +120,25 @@ func CallResetMapHashes(client *dfhackrpc.Client) (dfhackrpc.CommandResult, erro
 }
 
 // CallGetItemList is a convenience wrapper around the RemoteFortressReader::GetItemList RPC method.
-func CallGetItemList(client *dfhackrpc.Client) (*MaterialList, dfhackrpc.CommandResult, error) {
+func CallGetItemList(client *dfhackrpc.Client) ([]*MaterialDefinition, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response MaterialList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetItemList", &request, &response)
 
-	return &response, rv, err
+	return response.GetMaterialList(), rv, err
 }
 
 // CallGetBuildingDefList is a convenience wrapper around the RemoteFortressReader::GetBuildingDefList RPC method.
-func CallGetBuildingDefList(client *dfhackrpc.Client) (*BuildingList, dfhackrpc.CommandResult, error) {
+func CallGetBuildingDefList(client *dfhackrpc.Client) ([]*BuildingDefinition, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response BuildingList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetBuildingDefList", &request, &response)
 
-	return &response, rv, err
+	return response.GetBuildingList(), rv, err
 }
 
 // CallGetWorldMap is a convenience wrapper around the RemoteFortressReader::GetWorldMap RPC method.
@@ -186,23 +186,23 @@ func CallGetRegionMapsNew(client *dfhackrpc.Client) (*RegionMaps, dfhackrpc.Comm
 }
 
 // CallGetCreatureRaws is a convenience wrapper around the RemoteFortressReader::GetCreatureRaws RPC method.
-func CallGetCreatureRaws(client *dfhackrpc.Client) (*CreatureRawList, dfhackrpc.CommandResult, error) {
+func CallGetCreatureRaws(client *dfhackrpc.Client) ([]*CreatureRaw, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response CreatureRawList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetCreatureRaws", &request, &response)
 
-	return &response, rv, err
+	return response.GetCreatureRaws(), rv, err
 }
 
 // CallGetPartialCreatureRaws is a convenience wrapper around the RemoteFortressReader::GetPartialCreatureRaws RPC method.
-func CallGetPartialCreatureRaws(client *dfhackrpc.Client, request *ListRequest) (*CreatureRawList, dfhackrpc.CommandResult, error) {
+func CallGetPartialCreatureRaws(client *dfhackrpc.Client, request *ListRequest) ([]*CreatureRaw, dfhackrpc.CommandResult, error) {
 	var response CreatureRawList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetPartialCreatureRaws", request, &response)
 
-	return &response, rv, err
+	return response.GetCreatureRaws(), rv, err
 }
 
 // CallGetWorldMapCenter is a convenience wrapper around the RemoteFortressReader::GetWorldMapCenter RPC method.
@@ -217,23 +217,23 @@ func CallGetWorldMapCenter(client *dfhackrpc.Client) (*WorldMap, dfhackrpc.Comma
 }
 
 // CallGetPlantRaws is a convenience wrapper around the RemoteFortressReader::GetPlantRaws RPC method.
-func CallGetPlantRaws(client *dfhackrpc.Client) (*PlantRawList, dfhackrpc.CommandResult, error) {
+func CallGetPlantRaws(client *dfhackrpc.Client) ([]*PlantRaw, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response PlantRawList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetPlantRaws", &request, &response)
 
-	return &response, rv, err
+	return response.GetPlantRaws(), rv, err
 }
 
 // CallGetPartialPlantRaws is a convenience wrapper around the RemoteFortressReader::GetPartialPlantRaws RPC method.
-func CallGetPartialPlantRaws(client *dfhackrpc.Client, request *ListRequest) (*PlantRawList, dfhackrpc.CommandResult, error) {
+func CallGetPartialPlantRaws(client *dfhackrpc.Client, request *ListRequest) ([]*PlantRaw, dfhackrpc.CommandResult, error) {
 	var response PlantRawList
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetPartialPlantRaws", request, &response)
 
-	return &response, rv, err
+	return response.GetPlantRaws(), rv, err
 }
 
 // CallCopyScreen is a convenience wrapper around the RemoteFortressReader::CopyScreen RPC method.
@@ -262,21 +262,24 @@ func CallSendDigCommand(client *dfhackrpc.Client, request *DigCommand) (dfhackrp
 }
 
 // CallSetPauseState is a convenience wrapper around the RemoteFortressReader::SetPauseState RPC method.
-func CallSetPauseState(client *dfhackrpc.Client, request *SingleBool) (dfhackrpc.CommandResult, error) {
+func CallSetPauseState(client *dfhackrpc.Client, value bool) (dfhackrpc.CommandResult, error) {
+	var request SingleBool
+	request.Value = &value
+
 	var response dfproto_core.EmptyMessage
 
-	return client.CallPlugin("RemoteFortressReader", "SetPauseState", request, &response)
+	return client.CallPlugin("RemoteFortressReader", "SetPauseState", &request, &response)
 }
 
 // CallGetPauseState is a convenience wrapper around the RemoteFortressReader::GetPauseState RPC method.
-func CallGetPauseState(client *dfhackrpc.Client) (*SingleBool, dfhackrpc.CommandResult, error) {
+func CallGetPauseState(client *dfhackrpc.Client) (bool, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response SingleBool
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetPauseState", &request, &response)
 
-	return &response, rv, err
+	return response.GetValue(), rv, err
 }
 
 // CallGetVersionInfo is a convenience wrapper around the RemoteFortressReader::GetVersionInfo RPC method.
@@ -291,14 +294,14 @@ func CallGetVersionInfo(client *dfhackrpc.Client) (*VersionInfo, dfhackrpc.Comma
 }
 
 // CallGetReports is a convenience wrapper around the RemoteFortressReader::GetReports RPC method.
-func CallGetReports(client *dfhackrpc.Client) (*Status, dfhackrpc.CommandResult, error) {
+func CallGetReports(client *dfhackrpc.Client) ([]*Report, dfhackrpc.CommandResult, error) {
 	var request dfproto_core.EmptyMessage
 
 	var response Status
 
 	rv, err := client.CallPlugin("RemoteFortressReader", "GetReports", &request, &response)
 
-	return &response, rv, err
+	return response.GetReports(), rv, err
 }
 
 // CallMoveCommand is a convenience wrapper around the RemoteFortressReader::MoveCommand RPC method.
@@ -327,10 +330,13 @@ func CallMenuQuery(client *dfhackrpc.Client) (*MenuContents, dfhackrpc.CommandRe
 }
 
 // CallMovementSelectCommand is a convenience wrapper around the RemoteFortressReader::MovementSelectCommand RPC method.
-func CallMovementSelectCommand(client *dfhackrpc.Client, request *dfproto_core.IntMessage) (dfhackrpc.CommandResult, error) {
+func CallMovementSelectCommand(client *dfhackrpc.Client, value int32) (dfhackrpc.CommandResult, error) {
+	var request dfproto_core.IntMessage
+	request.Value = &value
+
 	var response dfproto_core.EmptyMessage
 
-	return client.CallPlugin("RemoteFortressReader", "MovementSelectCommand", request, &response)
+	return client.CallPlugin("RemoteFortressReader", "MovementSelectCommand", &request, &response)
 }
 
 // CallMiscMoveCommand is a convenience wrapper around the RemoteFortressReader::MiscMoveCommand RPC method.
