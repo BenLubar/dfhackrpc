@@ -36,13 +36,10 @@ var colors = [...]color.Attribute{
 	dfproto_core.CoreTextFragment_COLOR_WHITE:        color.FgHiWhite,
 }
 
-func colorAttr(c dfproto_core.CoreTextFragment_Color) color.Attribute {
-	if c >= 0 && int(c) < len(colors) {
-		return colors[c]
-	}
-	return color.Reset
-}
-
 func (c *Client) outputTextFragment(text *dfproto_core.CoreTextFragment) {
-	_, _ = color.New(colorAttr(text.GetColor())).Fprint(c.out, text.GetText())
+	attr := color.Reset
+	if text.Color != nil {
+		attr = colors[text.GetColor()]
+	}
+	_, _ = color.New(attr).Fprint(c.out, text.GetText())
 }

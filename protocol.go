@@ -24,8 +24,9 @@ const (
 )
 
 type rpcMessageHeader struct {
-	ID   int16
-	Size int32
+	ID      int16
+	Padding [2]byte
+	Size    int32
 }
 
 func writeFull(w io.Writer, b []byte) error {
